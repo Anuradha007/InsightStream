@@ -1,0 +1,21 @@
+Engineering Handbook — Development Standards
+
+Version Control
+- Use feature branches; main is protected. All changes via pull requests.
+- Commit messages: present tense, imperative ("Add retry logic" not "Added retry logic").
+
+Code Review
+- Two approvals required for main. Review within 24 hours when possible.
+- Check for tests, docs, and backward compatibility.
+
+APIs
+- REST: JSON; use kebab-case for URLs, camelCase for JSON.
+- Document with OpenAPI. Keep breaking changes to major versions.
+
+Testing
+- Unit tests for business logic; integration tests for APIs and DB.
+- Minimum 80% coverage on new code for critical paths.
+
+Incidents
+- Page on-call per runbook. Post-incident review within 48 hours.
+- Blameless culture; focus on process and prevention.
