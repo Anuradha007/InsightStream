@@ -1,0 +1,10 @@
+# Build and runtime
+backend/target/
+frontend/node_modules/
+chroma_data/
+.venv-chroma/
+
+# IDE and OS
+.idea/
+*.iml
+.DS_Store
