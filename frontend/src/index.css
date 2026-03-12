@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-surface: #0f172a;
+  --color-surface-light: #1e293b;
+  --color-brand: #0ea5e9;
+}
+
+body {
+  @apply bg-surface text-slate-200 font-sans antialiased min-h-screen;
+}
+
+/* Prose for rendered answers */
+.prose-answer {
+  @apply text-slate-300 leading-relaxed whitespace-pre-wrap;
+}
+.prose-answer p + p {
+  @apply mt-3;
+}
