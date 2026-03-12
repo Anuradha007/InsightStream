@@ -1,0 +1,101 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: insightstream
+
+# Spring AI: Ollama (chat + embedding). Override model per agent in insightstream.team-configuration.
+# Embedding must be under spring.ai.ollama.embedding.options (default is mxbai-embed-large if not set).
+spring.ai:
+  ollama:
+    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+    chat:
+      options:
+        model: granite4:latest
+    embedding:
+      options:
+        # Must be pulled in Ollama first: ollama pull nomic-embed-text
+        model: nomic-embed-text:latest
+
+# ---------------------------------------------------------------------------
+# GlobalParameters: chunking, embedding, and model defaults
+# ---------------------------------------------------------------------------
+insightstream:
+  global-parameters:
+    chunk-size: 1000
+    chunk-overlap: 200
+    agent-summary-provider: ollama
+    agent-summary-model: granite4:latest
+    chunk-context-provider: ollama
+    chunk-context-model: granite4:latest
+    embedding-provider: ollama
+    embedding-model: nomic-embed-text:latest
+    query-agent-provider: ollama
+    query-agent-model: granite4:latest
+    anthropic-timeout-seconds: 1200
+
+  # Chroma DB (v2 API; requires Chroma server 0.6.1+ / chromadb 1.x)
+  chroma:
+    base-url: ${CHROMA_URL:http://localhost:8000}
+    collection-name: insightstream_docs
+    tenant: default_tenant
+    database: default_database
+
+  # Hybrid search
+  hybrid-search:
+    semantic-top-k: 20
+    bm25-top-k: 20
+    rrf-k: 60
+
+# ---------------------------------------------------------------------------
+# TeamConfiguration: teams and agents (model per agent from config)
+# Bracket notation preserves map keys (QueryTeam / IngestionTeam) for lookup.
+# ---------------------------------------------------------------------------
+  team-configuration:
+    "[QueryTeam]":
+      description: "Handles user queries over the document corpus using RAG."
+      agents:
+        query_agent:
+          max-tokens: 4096
+          model: granite4:latest
+          provider: ollama
+          temperature: 0.3
+          max-turns: 10
+          system-prompt: |
+            You are a helpful enterprise assistant. Answer questions using ONLY the provided context from internal documents.
+            If the context does not contain enough information, say so. Do not invent facts.
+            Cite which document or passage you used when relevant.
+        summarizer:
+          max-tokens: 2048
+          model: granite4:latest
+          provider: ollama
+          temperature: 0.2
+          max-turns: 5
+          system-prompt: |
+            You summarize document chunks concisely for retrieval. Preserve key facts and entities.
+      tasks:
+        answer:
+          user-prompt: |
+            Context from internal documents:
+            {context}
+
+            User question: {query}
+
+            Provide a clear, accurate answer based only on the context above.
+        summarize:
+          user-prompt: |
+            Summarize the following text for searchability. Keep key facts and terms.
+            {text}
+
+    "[IngestionTeam]":
+      description: "Processes and indexes documents for retrieval."
+      agents:
+        chunk_processor:
+          max-tokens: 512
+          model: granite4:latest
+          provider: ollama
+          temperature: 0.0
+          max-turns: 1
+          system-prompt: |
+            You assist with document chunking metadata. Output minimal structured labels if needed.
